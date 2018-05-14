@@ -590,11 +590,10 @@ MediaPlayerService::Client::Client(
     mUid = uid;
     mRetransmitEndpointValid = false;
     mAudioAttributes = NULL;
-    mListener = new Listener(this);
 
 #if CALLBACK_ANTAGONIZER
     ALOGD("create Antagonizer");
-    mAntagonizer = new Antagonizer(mListener);
+    mAntagonizer = new Antagonizer(notify, this);
 #endif
 }
 
@@ -628,7 +627,7 @@ void MediaPlayerService::Client::disconnect()
     // and reset the player. We assume the player will serialize
     // access to itself if necessary.
     if (p != 0) {
-        p->setNotifyCallback(0);
+        p->setNotifyCallback(0, 0);
 #if CALLBACK_ANTAGONIZER
         ALOGD("kill Antagonizer");
         mAntagonizer->kill();
@@ -653,7 +652,7 @@ sp<MediaPlayerBase> MediaPlayerService::Client::createPlayer(player_type playerT
         p.clear();
     }
     if (p == NULL) {
-        p = MediaPlayerFactory::createPlayer(playerType, mListener, mPid);
+        p = MediaPlayerFactory::createPlayer(playerType, this, notify, mPid);
     }
 
     if (p != NULL) {
@@ -1443,13 +1442,13 @@ void MediaPlayerService::Client::notify(
     sp<Client> nextClient;
     status_t errStartNext = NO_ERROR;
     {
-        Mutex::Autolock l(mLock);
-        c = mClient;
-        if (msg == MEDIA_PLAYBACK_COMPLETE && mNextClient != NULL) {
-            nextClient = mNextClient;
+        Mutex::Autolock l(client->mLock);
+        c = client->mClient;
+        if (msg == MEDIA_PLAYBACK_COMPLETE && client->mNextClient != NULL) {
+            nextClient = client->mNextClient;
 
-            if (mAudioOutput != NULL)
-                mAudioOutput->switchToNextOutput();
+            if (client->mAudioOutput != NULL)
+                client->mAudioOutput->switchToNextOutput();
 
             errStartNext = nextClient->start();
         }
@@ -1475,13 +1474,13 @@ void MediaPlayerService::Client::notify(
         MEDIA_INFO_METADATA_UPDATE == ext1) {
         const media::Metadata::Type metadata_type = ext2;
 
-        if(shouldDropMetadata(metadata_type)) {
+        if(client->shouldDropMetadata(metadata_type)) {
             return;
         }
 
         // Update the list of metadata that have changed. getMetadata
         // also access mMetadataUpdated and clears it.
-        addNewMetadataUpdate(metadata_type);
+        client->addNewMetadataUpdate(metadata_type);
     }
 
     if (c != NULL) {
@@ -1564,7 +1563,7 @@ int Antagonizer::callbackThread(void* user)
     while (!p->mExit) {
         if (p->mActive) {
             ALOGV("send event");
-            p->mListener->notify(0, 0, 0, 0);
+            p->mCb(p->mClient, 0, 0, 0);
         }
         usleep(interval);
     }

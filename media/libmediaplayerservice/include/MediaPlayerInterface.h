@@ -74,13 +74,6 @@ typedef void (*notify_callback_f)(const wp<IMediaPlayer> &listener,
 class MediaPlayerBase : public RefBase
 {
 public:
-    // callback mechanism for passing messages to MediaPlayer object
-    class Listener : public RefBase {
-    public:
-        virtual void notify(int msg, int ext1, int ext2, const Parcel *obj) = 0;
-        virtual ~Listener() {}
-    };
-
     // AudioSink: abstraction layer for audio output
     class AudioSink : public RefBase {
     public:

@@ -215,6 +215,7 @@ class MediaPlayerService : public BnMediaPlayerService
 
     }; // AudioOutput
 
+
 public:
     static  void                instantiate();
 
@@ -436,38 +437,23 @@ private:
 
         status_t setAudioAttributes_l(const Parcel &request);
 
-        class Listener : public MediaPlayerBase::Listener {
-        public:
-            Listener(const wp<Client> &client) : mClient(client) {}
-            virtual ~Listener() {}
-            virtual void notify(int msg, int ext1, int ext2, const Parcel *obj) {
-                sp<Client> client = mClient.promote();
-                if (client != NULL) {
-                    client->notify(msg, ext1, ext2, obj);
-                }
-            }
-        private:
-            wp<Client> mClient;
-        };
-
-        mutable     Mutex                         mLock;
-                    sp<MediaPlayerBase>           mPlayer;
-                    sp<MediaPlayerService>        mService;
-                    sp<IMediaPlayerClient>        mClient;
-                    sp<AudioOutput>               mAudioOutput;
-                    pid_t                         mPid;
-                    status_t                      mStatus;
-                    bool                          mLoop;
-                    int32_t                       mConnId;
-                    audio_session_t               mAudioSessionId;
-                    audio_attributes_t *          mAudioAttributes;
-                    uid_t                         mUid;
-                    sp<ANativeWindow>             mConnectedWindow;
-                    sp<IBinder>                   mConnectedWindowBinder;
-                    struct sockaddr_in            mRetransmitEndpoint;
-                    bool                          mRetransmitEndpointValid;
-                    sp<Client>                    mNextClient;
-                    sp<MediaPlayerBase::Listener> mListener;
+        mutable     Mutex                       mLock;
+                    sp<MediaPlayerBase>         mPlayer;
+                    sp<MediaPlayerService>      mService;
+                    sp<IMediaPlayerClient>      mClient;
+                    sp<AudioOutput>             mAudioOutput;
+                    pid_t                       mPid;
+                    status_t                    mStatus;
+                    bool                        mLoop;
+                    int32_t                     mConnId;
+                    audio_session_t             mAudioSessionId;
+                    audio_attributes_t *        mAudioAttributes;
+                    uid_t                       mUid;
+                    sp<ANativeWindow>           mConnectedWindow;
+                    sp<IBinder>                 mConnectedWindowBinder;
+                    struct sockaddr_in          mRetransmitEndpoint;
+                    bool                        mRetransmitEndpointValid;
+                    sp<Client>                  mNextClient;
 
         // Metadata filters.
         media::Metadata::Filter mMetadataAllow;  // protected by mLock
@@ -482,7 +468,7 @@ private:
         sp<ServiceDeathNotifier> mExtractorDeathListener;
         sp<ServiceDeathNotifier> mCodecDeathListener;
 #if CALLBACK_ANTAGONIZER
-                    Antagonizer*                  mAntagonizer;
+                    Antagonizer*                mAntagonizer;
 #endif
     }; // Client
 
